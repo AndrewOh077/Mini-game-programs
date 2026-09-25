@@ -1,0 +1,225 @@
+#include<iostream>
+#define NAME_SIZE	32
+#define ACCOUNT_NUMBER	100
+
+using std::cin;
+using std::cout;
+using std::endl;
+
+struct BankAccountInfo
+{
+	char szName[NAME_SIZE];			//이름
+	int iBalance;					//예산
+	int iRoutingNumber[NAME_SIZE];	//계좌번호
+};
+
+struct ACCOUNT
+{
+	BankAccountInfo		tBankAccountInfo[ACCOUNT_NUMBER];
+};
+
+enum MENU
+{
+	MENUCREATACCOUNT = 1,
+	MENUEACCOUNTINFO,
+	MENUDEPOSIT,
+	MENUWITHDRAWAL,
+	MENUETRANSFER,
+	EXIT,
+};
+
+
+int main()
+{
+	ACCOUNT accountlist;
+
+	bool bSystemrun = true;
+	int iAccountNumber = 0;
+	for (int i = 0; i <= ACCOUNT_NUMBER; i++)
+	{
+		accountlist.tBankAccountInfo[i].iBalance = 0;
+	}
+
+
+	while (bSystemrun)
+	{
+		system("cls");
+		cout << "========== 은행 계좌 관리 프로그램 ==========" << endl << endl;
+		cout << "1. 계좌 생성" << endl << endl;
+		cout << "2. 계좌 정보 보기" << endl << endl;
+		cout << "3. 입금" << endl << endl;
+		cout << "4. 출금" << endl << endl;
+		cout << "5. 송금" << endl << endl;
+		cout << "6. 종료" << endl << endl << endl << endl;
+
+		cout << "메뉴를 입력하세요: ";
+		int iMenu;
+		cin >> iMenu;
+
+		//계좌의 개수 / 게좌번호
+		
+
+		switch (iMenu)
+		{
+			case MENUCREATACCOUNT:
+			{
+				cout << "이름을 입력하세요: ";
+				cin >> accountlist.tBankAccountInfo[iAccountNumber].szName;
+
+				cout << "계좌번호: " << iAccountNumber;
+
+				iAccountNumber++;
+
+				break;
+			}
+
+			case MENUEACCOUNTINFO:
+			{
+				char szSearch[NAME_SIZE];
+
+				cout << "이름을 입력하세요: ";
+				cin >> szSearch;
+				cout << endl << endl;
+
+				for (int i = 0; i < iAccountNumber; i++)
+				{
+					if (strcmp(accountlist.tBankAccountInfo[i].szName, szSearch) == 0)
+					{
+						cout << "계좌번호: " << i << endl;
+						cout << "예산 정보: " << accountlist.tBankAccountInfo[i].iBalance << "원" << endl << endl;
+					}
+
+				}
+			
+				break;
+			}
+
+			case MENUDEPOSIT:
+			{
+				char szSearch[NAME_SIZE];
+				int iDeposit;
+
+				cout << "이름을 입력하세요: ";
+				cin >> szSearch;
+				cout << endl << endl;
+
+				for (int i = 0; i < iAccountNumber; i++)
+				{
+					if (strcmp(accountlist.tBankAccountInfo[i].szName, szSearch) == 0)
+					{
+						cout << "계좌번호: " << i << endl;
+
+						cout << "예산 정보: ";
+						cout << accountlist.tBankAccountInfo[i].iBalance;
+						cout << endl << endl;
+
+						cout << "입금할 돈을 입력하세요: ";
+						cin >> iDeposit;
+						cout << endl << endl;
+
+						accountlist.tBankAccountInfo[i].iBalance += iDeposit;
+						cout << "세로운 예산 정보: ";
+						cout << accountlist.tBankAccountInfo[i].iBalance;
+					}
+				}
+
+				break;
+			}
+
+			case MENUWITHDRAWAL:
+			{
+				char szSearch[NAME_SIZE];
+				int iWithdrawal;
+
+				cout << "이름을 입력하세요: ";
+				cin >> szSearch;
+				cout << endl << endl;
+
+				for (int i = 0; i < iAccountNumber; i++)
+				{
+					if (strcmp(accountlist.tBankAccountInfo[i].szName, szSearch) == 0)
+					{
+						cout << "계좌번호: " << i << endl;
+
+						cout << "예산 정보: ";
+						cout << accountlist.tBankAccountInfo[i].iBalance;
+						cout << endl << endl;
+
+						cout << "출금할 돈을 입력하세요: ";
+						cin >> iWithdrawal;
+						cout << endl << endl;
+
+						if (accountlist.tBankAccountInfo[i].iBalance < iWithdrawal)
+						{
+							cout << "잔액이 부족합니다";
+							break;
+						}
+						else
+						{
+							accountlist.tBankAccountInfo[i].iBalance -= iWithdrawal;
+							cout << "세로운 예산 정보: ";
+							cout << accountlist.tBankAccountInfo[i].iBalance;
+						}
+					}
+				}
+				break;
+			}
+			
+			case MENUETRANSFER:
+			{
+				char szSearch[NAME_SIZE];
+				int iTransfer;
+
+				cout << "본인 이름을 입력하세요: ";
+				cin >> szSearch;
+				cout << endl << endl;
+
+				cout << "보낼 돈을 입력하세요: ";
+				cin >> iTransfer;
+				cout << endl << endl;
+
+				for (int i = 0; i < iAccountNumber; i++)
+				{
+					if (accountlist.tBankAccountInfo[i].iBalance < iTransfer)
+					{
+						cout << "잔액이 부족합니다";
+						break;
+					}
+
+					else if (strcmp(accountlist.tBankAccountInfo[i].szName, szSearch) == 0)
+					{
+						accountlist.tBankAccountInfo[i].iBalance -= iTransfer;
+						cout << "남은 금액: " << accountlist.tBankAccountInfo[i].iBalance;
+					}				
+				}
+				cout << endl << endl;
+
+				cout << "돈을 받을 사람 이름을 입력하세요: ";
+				cin >> szSearch;
+				cout << endl << endl;
+
+				for (int i = 0; i < iAccountNumber; i++)
+				{
+					if (strcmp(accountlist.tBankAccountInfo[i].szName, szSearch) == 0)
+					{
+						accountlist.tBankAccountInfo[i].iBalance += iTransfer;
+						cout << "현제 예산: " << accountlist.tBankAccountInfo[i].iBalance;
+					}
+				}   				   
+				break;
+			}
+
+			case EXIT:
+			{
+				bSystemrun = false;
+				break;
+			}
+		}
+
+		cout << endl << endl << endl << endl << "작업을 다 마쳤습니다. 엔터키를 눌러서 매뉴화면으로 돌아가십시오.";
+		system("pause>null");
+	}
+
+
+	return 0;
+}
