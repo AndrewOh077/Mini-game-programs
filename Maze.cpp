@@ -45,7 +45,7 @@ struct __POINT
 };
 
 typedef __POINT		POINT;
-typedef __POINT*	PPOINT;
+typedef __POINT* PPOINT;
 
 /*
 	void SetMaze(char _Maze[MAZE_Y][MAZE_X], POINT* _pStartPos, POINT* _pDestPos)	{	}
@@ -240,12 +240,13 @@ void MoveRight(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 	}
 }
 
-void Plantbomb(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int *_iBombCount)
+void Plantbomb(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int* _iBombCount)
 {
-	*_pBombPos = *_pPlayerPos;
-	// _pBombPos->x = _pPlayerPos->x;
-	// _pBombPos->y = _pPlayerPos->y;
-	_Maze[_pBombPos->y][_pBombPos->x] = BOMB;
+	if (*_iBombCount >= MAX_BOMB)
+		return;
+
+	_pBombPos[*_iBombCount] = *_pPlayerPos;
+	_Maze[_pBombPos[*_iBombCount].y][_pBombPos[*_iBombCount].x] = BOMB;
 	(*_iBombCount)++;
 }
 
@@ -254,11 +255,11 @@ int Item()
 	return ITEM_SPADE + rand() % 4;
 }
 
-void Detonate(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int *_iBombCount)
+void Detonate(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int* _iBombCount)
 {
 	for (int i = 0; i < *_iBombCount; i++)
 	{
-		_Maze[_pBombPos[i].y][_pBombPos[i].x] = ROAD;		
+		_Maze[_pBombPos[i].y][_pBombPos[i].x] = ROAD;
 
 		if (_Maze[_pBombPos[i].y + 1][_pBombPos[i].x] == WALL)
 		{
@@ -276,7 +277,7 @@ void Detonate(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, 
 		{
 			_Maze[_pBombPos[i].y][_pBombPos[i].x - 1] = Item();
 		}
-	}	
+	}
 	*_iBombCount = 0;
 }
 
@@ -332,7 +333,7 @@ void Portal(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pAlpha, POIN
 		*_pPlayerPos = *_pAlpha;
 }
 
-bool MovePlayer(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, POINT* _pAlpha, POINT* _pBeta, int *_iBombCount)
+bool MovePlayer(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, POINT* _pAlpha, POINT* _pBeta, int* _iBombCount)
 {
 	char cInput = _getch();
 
@@ -401,7 +402,7 @@ int main()
 	int _iBombCount = 0;
 
 	SetMaze(szMaze, &tPlayerPos, &tStartPos, &tDestPos);
-	
+
 	while (true)
 	{
 		system("cls");
