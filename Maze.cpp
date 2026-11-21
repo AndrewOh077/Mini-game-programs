@@ -3,6 +3,7 @@
 
 #define MAZE_X		41
 #define MAZE_Y		40
+#define MAX_BOMB	10
 
 #define MAZE_VALID	MAZE_X - 1
 
@@ -21,6 +22,12 @@ enum MAZE_BLOCK
 	ROAD,
 	START,
 	DEST,
+	BOMB,
+	PORTAL,
+	ITEM_SPADE,
+	ITEM_HEART,
+	ITEM_CLUB,
+	ITEM_DIAMOND,
 
 	BORDER_LT = 'A',
 	BORDER_RT,
@@ -50,13 +57,13 @@ typedef __POINT*	PPOINT;
 
 
 	int iArr1[10];			// Array Element: int
-	int* pArr1 = iArr1;		// (int)*를 사용해서 Element를 가리킬 수 있다.
+	int* pArr1 = iArr1;		// Can point to an element using (int)*.
 
 	int** pptr = ptr1;		// Array Element: int*
-							// (int*)*를 사용해서 Element를 가리킬 수 있다.
+							// Can point to an element using (int*)*.
 
 	int iArr2[4][4];		// Array Element: int[4]
-	ptr2 = iArr2;			// int(*Name)[4] 변수로 가리킬 수 있다.
+	ptr2 = iArr2;			// Can be pointed to with an int(*Name)[4] variable.
 */
 
 void SetMaze(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pStartPos, POINT* _pDestPos)
@@ -129,6 +136,14 @@ void SetMaze(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pStartPos, 
 
 }
 
+MAZE_BLOCK GetTileInfo(char _Maze[MAZE_Y][MAZE_X], POINT* _pPos)
+{
+	if (_pPos->x < 0 || _pPos->x >= MAZE_X || _pPos->y < 0 || _pPos->y >= MAZE_Y)
+		return WALL;
+
+	return (MAZE_BLOCK)_Maze[_pPos->y][_pPos->x];
+}
+
 void Render(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 {
 	for (int i = 0; i < MAZE_Y; i++)
@@ -150,7 +165,7 @@ void Render(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 				cout << "┛";
 				break;
 			case BORDER_H:
-				cout << "─";
+				cout << "──";
 				break;
 			case BORDER_V:
 				cout << "│";
@@ -164,13 +179,26 @@ void Render(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 				cout << "■";
 
 			else if (_Maze[i][j] == ROAD)
-				cout << " ";
+				cout << "  ";
 
 			else if (_Maze[i][j] == START)
 				cout << "↑";
 
 			else if (_Maze[i][j] == DEST)
 				cout << "↓";
+			else if (_Maze[i][j] == BOMB)
+				cout << "Ｂ";
+
+			else if (_Maze[i][j] == ITEM_SPADE)
+				cout << "♠";
+			else if (_Maze[i][j] == ITEM_HEART)
+				cout << "♥";
+			else if (_Maze[i][j] == ITEM_CLUB)
+				cout << "♣";
+			else if (_Maze[i][j] == ITEM_DIAMOND)
+				cout << "◈";
+			else if (_Maze[i][j] == PORTAL)
+				cout << "☎";
 		}
 		cout << endl;
 	}
@@ -212,7 +240,99 @@ void MoveRight(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 	}
 }
 
-bool MovePlayer(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
+void Plantbomb(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int *_iBombCount)
+{
+	*_pBombPos = *_pPlayerPos;
+	// _pBombPos->x = _pPlayerPos->x;
+	// _pBombPos->y = _pPlayerPos->y;
+	_Maze[_pBombPos->y][_pBombPos->x] = BOMB;
+	(*_iBombCount)++;
+}
+
+int Item()
+{
+	return ITEM_SPADE + rand() % 4;
+}
+
+void Detonate(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, int *_iBombCount)
+{
+	for (int i = 0; i < *_iBombCount; i++)
+	{
+		_Maze[_pBombPos[i].y][_pBombPos[i].x] = ROAD;		
+
+		if (_Maze[_pBombPos[i].y + 1][_pBombPos[i].x] == WALL)
+		{
+			_Maze[_pBombPos[i].y + 1][_pBombPos[i].x] = Item();
+		}
+		if (_Maze[_pBombPos[i].y - 1][_pBombPos[i].x] == WALL)
+		{
+			_Maze[_pBombPos[i].y - 1][_pBombPos[i].x] = Item();
+		}
+		if (_Maze[_pBombPos[i].y][_pBombPos[i].x + 1] == WALL)
+		{
+			_Maze[_pBombPos[i].y][_pBombPos[i].x + 1] = Item();
+		}
+		if (_Maze[_pBombPos[i].y][_pBombPos[i].x - 1] == WALL)
+		{
+			_Maze[_pBombPos[i].y][_pBombPos[i].x - 1] = Item();
+		}
+	}	
+	*_iBombCount = 0;
+}
+
+bool SetPortal(char _Maze[MAZE_Y][MAZE_X], POINT* _pAlpha, POINT* _pBeta)
+{
+	int iPortalCount = 0;
+	bool setportal = false;
+
+	for (int i = 0; i < MAZE_Y; i++)
+	{
+		for (int j = 0; j < MAZE_X; j++)
+		{
+			if (_Maze[i][j] != PORTAL)
+			{
+				continue;
+			}
+
+			if (iPortalCount == 0)
+			{
+				_pAlpha->y = i;
+				_pAlpha->x = j;
+			}
+			else if (iPortalCount == 1)
+			{
+				_pBeta->y = i;
+				_pBeta->x = j;
+			}
+			++iPortalCount;
+
+			if (iPortalCount == 2)
+			{
+				setportal = true;
+			}
+			else if (iPortalCount != 2)
+			{
+				setportal = false;
+			}
+		}
+	}
+
+	return setportal;
+}
+
+void Portal(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pAlpha, POINT* _pBeta)
+{
+	if (GetTileInfo(_Maze, _pPlayerPos) != PORTAL)
+		return;
+
+	// If on Alpha, move to Beta; if on Beta, move to Alpha
+	if (_pPlayerPos->x == _pAlpha->x && _pPlayerPos->y == _pAlpha->y)
+		*_pPlayerPos = *_pBeta;
+	else if (_pPlayerPos->x == _pBeta->x && _pPlayerPos->y == _pBeta->y)
+		*_pPlayerPos = *_pAlpha;
+}
+
+bool MovePlayer(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos, POINT* _pBombPos, POINT* _pAlpha, POINT* _pBeta, int *_iBombCount)
 {
 	char cInput = _getch();
 
@@ -237,16 +357,31 @@ bool MovePlayer(char _Maze[MAZE_Y][MAZE_X], POINT* _pPlayerPos)
 	case 'd':
 		MoveRight(_Maze, _pPlayerPos);
 		break;
+	case 'B':
+	case 'b':
+		Plantbomb(_Maze, _pPlayerPos, _pBombPos, _iBombCount);
+		break;
+	case 'F':
+	case 'f':
+		Detonate(_Maze, _pPlayerPos, _pBombPos, _iBombCount);
+		break;
+	case'P':
+	case'p':
+		if (SetPortal(_Maze, _pAlpha, _pBeta))
+			break;
+		if (_Maze[_pPlayerPos->y][_pPlayerPos->x] == ROAD)
+			_Maze[_pPlayerPos->y][_pPlayerPos->x] = PORTAL;
+		break;
 	}
 
 	return true;
 }
 
-bool Clear(PPOINT _pPlayerPos, PPOINT _pDestPos )
+bool Clear(PPOINT _pPlayerPos, PPOINT _pDestPos)
 {
 	if (_pPlayerPos->x == _pDestPos->x && _pPlayerPos->y == _pDestPos->y)
 	{
-		cout << "도착하였습니다 !!!" << endl;
+		cout << "You have arrived !!!" << endl;
 		return true;
 	}
 
@@ -257,24 +392,36 @@ int main()
 {
 	char szMaze[MAZE_Y][MAZE_X] = {};
 
+	srand((unsigned int)time(NULL));
+
 	POINT tPlayerPos;
+	POINT tBombPos[MAX_BOMB] = {};
 	POINT tStartPos, tDestPos;
+	POINT tPortalAlpha, tPortalBeta;
+	int _iBombCount = 0;
 
 	SetMaze(szMaze, &tPlayerPos, &tStartPos, &tDestPos);
-
+	
 	while (true)
 	{
 		system("cls");
 
 		Render(szMaze, &tPlayerPos);
 
-		cout << endl << "W:↑\tS:↓\tA:←\tD:→\tX:Exit" << endl;
+		cout << endl << "W:↑  S:↓  A:←  D:→  B: Plant bomb  F: Detonate bomb  P: Set portal  X:Exit" << endl;
 
 		if (bool isClear = Clear(&tPlayerPos, &tDestPos))
 			break;
 
-		if (bool isExit = !MovePlayer(szMaze, &tPlayerPos))
+		POINT tPrev = tPlayerPos;
+
+		if (bool isExit = !MovePlayer(szMaze, &tPlayerPos, tBombPos, &tPortalAlpha, &tPortalBeta, &_iBombCount))
 			break;
+
+		bool bPortal = SetPortal(szMaze, &tPortalAlpha, &tPortalBeta);
+
+		if (bPortal && (tPrev.x != tPlayerPos.x || tPrev.y != tPlayerPos.y))
+			Portal(szMaze, &tPlayerPos, &tPortalAlpha, &tPortalBeta);
 	}
 
 
